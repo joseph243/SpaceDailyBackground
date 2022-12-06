@@ -1,6 +1,11 @@
 package com.josephvanderzwart;
 
 public class PictureOfTheDay {
+
+    private String date;
+    private String url;
+    private String infoText;
+
     public String getUrl() {
         return url;
     }
@@ -24,8 +29,4 @@ public class PictureOfTheDay {
     public void setDate(String date) {
         this.date = date;
     }
-
-    String date;
-    String url;
-    String infoText;
 }
