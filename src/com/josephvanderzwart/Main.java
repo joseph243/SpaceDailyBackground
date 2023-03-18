@@ -1,13 +1,13 @@
 package com.josephvanderzwart;
 
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.Unirest;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -26,16 +26,17 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         System.out.println("Starting Daily Space Background:");
+        PictureOfTheDay pictureOfTheDay = new PictureOfTheDay();
         buildConfig();
         parseConfig();
-        PictureOfTheDay pictureOfTheDay = new PictureOfTheDay();
         String query = APIValues.getUrl() + myApiKey;
+        HttpRequest request = HttpRequest.newBuilder(URI.create(query)).build();
         boolean responseSuccess = false;
-        HttpResponse<JsonNode> response = null;
-
+        HttpResponse<String> response = null;
         if (buildPath()) {
-            response = Unirest.get(query).asJson();
-            responseSuccess = response.isSuccess();
+            HttpClient client = HttpClient.newBuilder().build();
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            responseSuccess = response.statusCode() == 200;
         }
         else {
             System.out.println("ERROR BUILDING PATH:  DID NOT DOWNLOAD PICTURE OF THE DAY.");
@@ -43,21 +44,17 @@ public class Main {
         }
 
         if (responseSuccess) {
-            System.out.println("Server Response = " + response.getStatus());
-            pictureOfTheDay.setDate(response.getBody().getObject().get("date").toString());
-            pictureOfTheDay.setUrl(response.getBody().getObject().get("url").toString());
-            if (myWantDescriptions) {
-                pictureOfTheDay.setInfoText(response.getBody().getObject().get("explanation").toString());
-            }
+            System.out.println("Connected to API successfully");
+            pictureOfTheDay.parseHTTPresponse(response.body());
         } else {
-            throw new Exception("Server Response Error " + response.getStatus() + " " + response.getStatusText());
+           throw new Exception("Server Response Error " + response.statusCode());
         }
 
         //output:
         if (myWantDescriptions) {
-            writeText(pictureOfTheDay.getDate() + ".txt", pictureOfTheDay.getInfoText());
+            writeText(pictureOfTheDay.getValue("date") + ".txt", pictureOfTheDay.getValue("explanation"));
         }
-        downloadFile(pictureOfTheDay.getDate() + ".jpg", pictureOfTheDay.getUrl());
+        downloadFile(pictureOfTheDay.getValue("date") + ".jpg", pictureOfTheDay.getValue("url"));
     }
 
     private static void writeText(String inFileName, String inText) {
