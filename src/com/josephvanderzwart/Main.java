@@ -68,18 +68,20 @@ public class Main {
     }
 
     private static void downloadFile(String infileName, String inURL) {
+        System.out.print("Downloading...   ");
         InputStream inputStream = null;
         Long bytes = Long.valueOf("0");
         try {
             inputStream = new URL(inURL).openStream();
             bytes = Files.copy(inputStream, Paths.get(myPath + "\\" + infileName), StandardCopyOption.REPLACE_EXISTING);
             inputStream.close();
+            System.out.println("Finished. " + bytes/1024 + " KB downloaded from URL:");
+            System.out.println(inURL);
+            System.out.println("Saved to: " + myPath + "\\" + infileName);
+            Thread.sleep(1000);
         } catch (Exception e) {
             System.out.println("ERROR WORKING DOWNLOAD STREAM:" + e.toString());
         }
-        System.out.println("file copy: " + bytes + " bytes read from:");
-        System.out.println(inURL);
-        System.out.println("Saved to: " + myPath + "\\" + infileName);
     }
 
     private static boolean buildPath() {
@@ -88,7 +90,7 @@ public class Main {
             System.out.println("Created Directory " + myPath);
         }
         catch (FileAlreadyExistsException e) {
-            System.out.println("Directory Already Exists: " + myPath);
+            System.out.println("Found Existing Directory: " + myPath);
         }
         catch (IOException e) {
             System.out.println("SYSTEM IO ERROR CREATING DIRECTORY" + e);
@@ -111,11 +113,12 @@ public class Main {
                     System.out.println("Created file: " + path);
                 }
                 catch (SecurityException e) {
-                    System.out.println("SECURITY EXCEPTION, YOU MAY NOT HAVE WRITE ACCESS TO THIS FOLDER: " + e);
+                    System.out.println("FILE SECURITY EXCEPTION BUILDING" + config + ", LOGGED IN USER MAY NOT " +
+                            "HAVE WRITE ACCESS TO THIS FOLDER: " + e);
                 }
                 catch (Exception e)
                 {
-                    System.out.println("UNKNOWN ERROR CREATING FILE: " + e);
+                    System.out.println("UNKNOWN ERROR CREATING" + config + " FILE: " + e);
                 }
             }
     }
@@ -132,10 +135,7 @@ public class Main {
         {
             for (String line : lines) {
                 if (line.toCharArray().length == 0 || line.toCharArray()[0] == '#') {
-                    //ignore commented (#) and blank lines.
-                }
-                else if (lines.size() > 100){
-                    System.out.println("ERROR: CONFIG NOT APPLIED. FILE TOO LARGE, REDUCE TO LESS THAN 100 LINES.");
+                    //purposely blank. ignore #comment and blank lines.
                 }
                 else {
                     //read uncommented line:
@@ -158,6 +158,12 @@ public class Main {
                     }
                 }
             }
+        }
+        else if (lines.size() > 100){
+            System.out.println("ERROR: CONFIG NOT APPLIED. FILE TOO LARGE, REDUCE TO LESS THAN 100 LINES.");
+        }
+        else {
+            System.out.println("ERROR: DID NOT CORRECTLY PARSE CONFIG FILE.");
         }
     }
 }
